@@ -1,11 +1,29 @@
 from fastapi import FastAPI
-from firebase_admin import credentials, firestore, initialize_app
+from google.oauth2 import service_account
+from google.cloud import firestore
+import os
 
 app = FastAPI()
 
-cred = credentials.Certificate("serviceAccountKey.json")
-initialize_app(cred)
-db = firestore.client()
+# إعداد بيانات الاعتماد من Environment Variables
+credentials = service_account.Credentials.from_service_account_info({
+    "type": "service_account",
+    "project_id": os.getenv("FIREBASE_PROJECT_ID"),
+    "private_key_id": os.getenv("FIREBASE_PRIVATE_KEY_ID"),
+    "private_key": os.getenv("FIREBASE_PRIVATE_KEY").replace("\\n", "\n"),
+    "client_email": os.getenv("FIREBASE_CLIENT_EMAIL"),
+    "client_id": os.getenv("FIREBASE_CLIENT_ID"),
+    "auth_uri": os.getenv("FIREBASE_AUTH_URI"),
+    "token_uri": os.getenv("FIREBASE_TOKEN_URI"),
+    "auth_provider_x509_cert_url": os.getenv("FIREBASE_AUTH_PROVIDER_X509_CERT_URL"),
+    "client_x509_cert_url": os.getenv("FIREBASE_CLIENT_X509_CERT_URL"),
+})
+
+# إنشاء Firestore Client
+db = firestore.Client(
+    project=os.getenv("FIREBASE_PROJECT_ID"),
+    credentials=credentials
+)
 
 @app.get("/")
 def root():
@@ -56,5 +74,3 @@ def analyze_student(student_id: str):
             "creativity": avg_creativity
         }
     }
-    import uvicorn
-
