@@ -1,11 +1,21 @@
 from fastapi import FastAPI
 from google.oauth2 import service_account
 from google.cloud import firestore
+from fastapi.middleware.cors import CORSMiddleware
 import os
 
 app = FastAPI()
 
-# إعداد بيانات الاعتماد من Environment Variables
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # لاحقًا نقدر نخصصه لرابط الواجهة فقط
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# إعداد بيانات الاعتماد
 credentials = service_account.Credentials.from_service_account_info({
     "type": "service_account",
     "project_id": os.getenv("FIREBASE_PROJECT_ID"),
@@ -19,7 +29,6 @@ credentials = service_account.Credentials.from_service_account_info({
     "client_x509_cert_url": os.getenv("FIREBASE_CLIENT_X509_CERT_URL"),
 })
 
-# إنشاء Firestore Client
 db = firestore.Client(
     project=os.getenv("FIREBASE_PROJECT_ID"),
     credentials=credentials
