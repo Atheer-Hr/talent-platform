@@ -57,6 +57,13 @@ def get_grades(student_id: str):
 def get_activities(student_id: str):
     docs = db.collection("activities").where("student_id", "==", student_id).stream()
     return [d.to_dict() for d in docs]
+@app.get("/student/{student_id}")
+def get_student(student_id: str):
+    docs = db.collection("students").where("student_id", "==", student_id).stream()
+    result = [d.to_dict() for d in docs]
+    if result:
+        return result[0]
+    return {"error": "Student not found"}
 
 @app.get("/analyze/{student_id}")
 def analyze_student(student_id: str):
@@ -83,3 +90,4 @@ def analyze_student(student_id: str):
             "creativity": avg_creativity
         }
     }
+
