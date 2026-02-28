@@ -9,11 +9,15 @@ app = FastAPI()
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # لاحقًا نقدر نخصصه لرابط الواجهة فقط
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# دالة لتوحيد شكل الـ ID (تحويل O إلى 0)
+def normalize(v: str):
+    return v.replace("O", "0").replace("o", "0").strip()
 
 # إعداد بيانات الاعتماد
 credentials = service_account.Credentials.from_service_account_info({
@@ -50,16 +54,20 @@ def get_students():
 
 @app.get("/grades/{student_id}")
 def get_grades(student_id: str):
-    docs = db.collection("grades").where("student_id", "==", student_id).stream()
+    fixed_id = normalize(student_id)
+    docs = db.collection("grades").where("student_id", "==", fixed_id).stream()
     return [d.to_dict() for d in docs]
 
 @app.get("/activities/{student_id}")
 def get_activities(student_id: str):
-    docs = db.collection("activities").where("student_id", "==", student_id).stream()
+    fixed_id = normalize(student_id)
+    docs = db.collection("activities").where("student_id", "==", fixed_id).stream()
     return [d.to_dict() for d in docs]
+
 @app.get("/student/{student_id}")
 def get_student(student_id: str):
-    docs = db.collection("students").where("student_id", "==", student_id).stream()
+    fixed_id = normalize(student_id)
+    docs = db.collection("students").where("student_id", "==", fixed_id).stream()
     result = [d.to_dict() for d in docs]
     if result:
         return result[0]
@@ -67,7 +75,9 @@ def get_student(student_id: str):
 
 @app.get("/analyze/{student_id}")
 def analyze_student(student_id: str):
-    grades_ref = db.collection("grades").where("student_id", "==", student_id).stream()
+    fixed_id = normalize(student_id)
+
+    grades_ref = db.collection("grades").where("student_id", "==", fixed_id).stream()
     grades = [g.to_dict() for g in grades_ref]
 
     if not grades:
@@ -81,7 +91,7 @@ def analyze_student(student_id: str):
     talent_index = round((avg_math + avg_science + avg_language + avg_creativity) / 4, 2)
 
     return {
-        "student_id": student_id,
+        "student_id": fixed_id,
         "talent_index": talent_index,
         "details": {
             "math": avg_math,
@@ -90,4 +100,3 @@ def analyze_student(student_id: str):
             "creativity": avg_creativity
         }
     }
-
